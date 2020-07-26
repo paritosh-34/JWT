@@ -29,9 +29,14 @@ app.post("/login", (req, res) => {
   });
 
   if (result.length) {
-    const accessToken = generate(result[0]);
-    console.log(accessToken);
-    return res.status(200).send({ accessToken: accessToken });
+    try {
+      const accessToken = generate(result[0]);
+      console.log(accessToken);
+      return res.status(200).send({ accessToken: accessToken });
+    } catch (err) {
+      console.log("-->", err);
+      return res.status(500).send({ error: err });
+    }
   }
 
   res.status(401).send({ err: "Unauthorized" });
@@ -41,4 +46,4 @@ app.get("/users", authenticate, (req, res) => {
   res.status(200).send(users);
 });
 
-app.listen(4000, () => console.log(`Listening on Port 3000`));
+app.listen(4000, () => console.log(`Listening on Port 4000`));
