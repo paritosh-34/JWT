@@ -1,22 +1,38 @@
 require("dotenv").config();
 
 const express = require("express");
-const { authenticate, generate } = require("./authenticate");
+const crypto = require("crypto");
+const cors = require("cors");
+const {
+  authenticate,
+  generate,
+  generateRefreshToken,
+  authenticateRefreshToken,
+} = require("./authenticate");
 
 const app = express();
 app.use(express.json());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 
 let users = [
   {
     id: 1,
-    email: "batishparitosh2@gmail.com",
-    password: "batishparitosh2@gmail.com",
+    email: "paritosh",
+    password: "toshi",
     name: "Paritosh",
+    role: "admin",
   },
+];
+
+let tokens = [
   {
-    id: 2,
-    email: "paritoshbatish@gmail.com",
-    name: "Batish",
+    userId: 1,
+    token: "",
   },
 ];
 
@@ -31,19 +47,47 @@ app.post("/login", (req, res) => {
   if (result.length) {
     try {
       const accessToken = generate(result[0]);
-      console.log(accessToken);
-      return res.status(200).send({ accessToken: accessToken });
+      const refreshToken = generateRefreshToken(result[0]);
+
+      return res
+        .status(200)
+        .cookie("jmc", refreshToken, {
+          httpOnly: true,
+          sameSite: true,
+          expires: 0,
+          // secure: true,
+        })
+        .send({ accessToken: accessToken });
     } catch (err) {
       console.log("-->", err);
-      return res.status(500).send({ error: err });
+      return res.status(401).send({ error: err });
     }
   }
-
-  res.status(401).send({ err: "Unauthorized" });
 });
 
 app.get("/users", authenticate, (req, res) => {
   res.status(200).send(users);
 });
 
-app.listen(4000, () => console.log(`Listening on Port 4000`));
+app.post("/request_refresh", (req, res) => {
+  try {
+    const result = authenticateRefreshToken(req);
+    const accessToken = generate(result);
+    const refreshToken = generateRefreshToken(result);
+
+    return res
+      .status(200)
+      .cookie("jmc", refreshToken, {
+        httpOnly: true,
+        sameSite: true,
+        expires: 0,
+        // secure: true,
+      })
+      .send({ accessToken: accessToken });
+  } catch (err) {
+    return res.status(401).send({ error: err });
+  }
+});
+
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => console.log(`Listening on Port ${PORT}`));

@@ -1,6 +1,10 @@
 const { sign, verify } = require("jsonwebtoken");
+const cookie = require("cookie");
+
 const secret = process.env.SECRET_SIGNATURE;
+const superSecret = process.env.SECRET_SECRET_SIGNATURE;
 if (!secret) throw new Error("Secret not set!");
+if (!superSecret) throw new Error("Super secret not set!");
 
 const authenticate = (req, res, next) => {
   const authorization = req.headers["authorization"];
@@ -8,7 +12,7 @@ const authenticate = (req, res, next) => {
 
   try {
     const token = authorization.split(" ")[1];
-    const payload = verify(token);
+    const payload = verify(token, secret);
     console.log(payload);
     next();
   } catch (error) {
@@ -17,13 +21,31 @@ const authenticate = (req, res, next) => {
   }
 };
 
-const generate = (user) => {
-  if (!user) throw new Error("No user found.");
+const authenticateRefreshToken = (req) => {
+  const { jmc } = cookie.parse(req.headers.cookie);
+  const payload = verify(jmc, superSecret);
+  return payload;
+};
 
-  return sign({ userId: user.id }, secret, {
+const generate = (user) => {
+  if (!user) throw new Error("Invalid Parameter");
+  if (user.role !== "admin") throw new Error("Not Authorized");
+
+  return sign({ userId: user.id, role: "admin" }, secret, {
     expiresIn: "15m",
   });
 };
 
+const generateRefreshToken = (user) => {
+  if (!user) throw new Error("Invalid Parameter");
+  if (user.role !== "admin") throw new Error("Not Authorized");
+
+  return sign({ userId: user.id, role: "admin" }, superSecret, {
+    expiresIn: "7d",
+  });
+};
+
 exports.authenticate = authenticate;
+exports.authenticateRefreshToken = authenticateRefreshToken;
 exports.generate = generate;
+exports.generateRefreshToken = generateRefreshToken;
