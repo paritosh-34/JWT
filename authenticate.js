@@ -13,7 +13,7 @@ const authenticate = (req, res, next) => {
   try {
     const token = authorization.split(" ")[1];
     const payload = verify(token, secret);
-    console.log(payload);
+    console.log(payload, Date.now());
     next();
   } catch (error) {
     console.log(error);
@@ -32,7 +32,7 @@ const generate = (user) => {
   if (user.role !== "admin") throw new Error("Not Authorized");
 
   return sign({ userId: user.id, role: "admin" }, secret, {
-    expiresIn: "15m",
+    expiresIn: "15s",
   });
 };
 
@@ -41,7 +41,7 @@ const generateRefreshToken = (user) => {
   if (user.role !== "admin") throw new Error("Not Authorized");
 
   return sign({ userId: user.id, role: "admin" }, superSecret, {
-    expiresIn: "7d",
+    expiresIn: "30s",
   });
 };
 

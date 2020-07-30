@@ -65,8 +65,24 @@ app.post("/login", (req, res) => {
   }
 });
 
-app.get("/users", authenticate, (req, res) => {
+app.get("/users", authenticate, (_req, res) => {
   res.status(200).send(users);
+});
+
+app.post("/dashboard", authenticate, (_req, res) => {
+  res.send("Hi from dashboard API");
+});
+
+app.post("/transactions", authenticate, (_req, res) => {
+  res.send("Hi from transactions API");
+});
+
+app.post("/users", authenticate, (_req, res) => {
+  res.send("Hi from users API");
+});
+
+app.post("/groups", authenticate, (_req, res) => {
+  res.send("Hi from groups API");
 });
 
 app.post("/request_refresh", (req, res) => {
